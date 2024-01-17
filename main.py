@@ -23,8 +23,8 @@ heroes = ['Quincy','Cyber Quincy','Gwen','Science Gwen','Obyn','Ocean Obyn','Str
 )
 @app_commands.describe(hom_only="Return only Hall of Masters maps")
 async def map_command(interaction: discord.Interaction, hom_only: Literal["Yes","No"]):
-    if map_command.get_parameter("hom_only") == "Yes":
-        await interaction.response.send_message(maps[random.randint(4,(len(maps) - 1))]) 
+    if interaction.data["options"][0]["value"] == "Yes":
+        await interaction.response.send_message(maps[random.randint(4,(len(maps) - 1))])
     else:
         await interaction.response.send_message(maps[random.randint(0,(len(maps) - 1))])
 
@@ -40,71 +40,84 @@ class PageButtons(discord.ui.View):
     def __init__(self):
         super().__init__()
         self.page_index = 0
+        self.subpage_index = 0
+        self.max_pages = 0
 
     @discord.ui.button(emoji="◀️",style=discord.ButtonStyle.primary)
     async def previous_button(self, interaction: discord.Interaction, button: discord.ui.Button):
         page_button = PageButtons()
-        page_button.page_index = self.page_index - 1
-        if page_button.page_index == 1:
+        page_button.page_index = self.page_index
+        page_button.subpage_index = self.subpage_index
+        page_button.max_pages = self.max_pages
+        if page_button.subpage_index == 1:
+            page_button.subpage_index = 0
+        else:
+            page_button.subpage_index = 1
+            page_button.page_index -= 1
+        if page_button.page_index == 1 and page_button.subpage_index == 0:
             page_button.previous_button.disabled = True
-        await interaction.response.send_message(lb_message(15,page_button.page_index), view=page_button)
+        embed=lb_embed(15,page_button.page_index,page_button.subpage_index)
+        page_button.pages_button.label = str((page_button.page_index-1)*2+page_button.subpage_index+1) + "/" + str(page_button.max_pages)
+        await interaction.response.defer()
+        msg = await interaction.original_response()
+        await msg.edit(embed=embed,view=page_button)
+    @discord.ui.button(label="1/?",style=discord.ButtonStyle.secondary, disabled=True)
+    async def pages_button(self):
+        pass
     @discord.ui.button(emoji="▶️",style=discord.ButtonStyle.primary)
     async def next_button(self, interaction: discord.Interaction, button: discord.ui.Button):
         page_button = PageButtons()
-        page_button.page_index += self.page_index + 1
-        await interaction.response.send_message(lb_message(15,page_button.page_index), view=page_button)
+        page_button.page_index = self.page_index
+        page_button.subpage_index = self.subpage_index
+        page_button.max_pages = self.max_pages
+        if page_button.subpage_index == 0:
+            page_button.subpage_index = 1
+        else:
+            page_button.subpage_index = 0
+            page_button.page_index += 1
+        page_button.pages_button.label = str((page_button.page_index-1)*2+page_button.subpage_index+1) + "/" + str(page_button.max_pages)
+        embed=lb_embed(15,page_button.page_index,page_button.subpage_index)
+        await interaction.response.defer()
+        msg = await interaction.original_response()
+        await msg.edit(embed=embed,view=page_button)
 
-def lb_message(season,page):
+def lb_embed(season,page,subpage):
     lb_url= "https://data.ninjakiwi.com/battles2/homs/season_" + str(season) + "/leaderboard?page=" + str(page)
     response = requests.get(lb_url)
     leaderboard = response.json()
+    embed = discord.Embed(
+            title="Season " + str(season) + " leaderboard",
+            )
     if leaderboard["success"] == False:
-        return "No more rankings available"
-    rankings = "```Rank Player         Score \n"
-    index_suffix = ""
-    space1 = ""
-    space2 = ""
-    for index, entry in enumerate(leaderboard["body"]):
-        if index == 10 or index == 11:
-            index_suffix = "th"
-        elif index % 10 == 0:
-            index_suffix = "st"
-        elif index % 10 == 1:
-            index_suffix = "nd"
+        discord.Embed.add_field(embed,name="No more rankings left",value="last page reached")
+    else:
+        if subpage == 0:
+            lb = leaderboard["body"][0:25]
         else:
-            index_suffix = "th"
-        if index < 9:
-            space1 = "  "
-        else:
-            space1 = " "
-        for x in range(15-len(entry["displayName"])):
-            space2 += " "
-        rankings += str(index+1+(page-1)*50) + index_suffix + space1 + entry["displayName"] + space2 + str(entry["score"]) + "\n"
-        space2 = ""
-    rankings += "```"
-    return rankings
+            lb = leaderboard["body"][25:50]
+        for index, entry in enumerate(lb):
+            field_name="#" + str(index+1+(page-1)*50+subpage*25) + ". " + entry["displayName"]
+            discord.Embed.add_field(
+                embed,
+                name=field_name,
+                value=str(entry["score"])
+                )
+    return embed
+
 
 @tree.command(
     name="leaderboard",
     description="Shows current season's leaderboard"
 )
 async def leaderboard_command(interaction: discord.Interaction):
-    rankings = lb_message(15,1)
+    homs = requests.get("https://data.ninjakiwi.com/battles2/homs").json()
+    rankings = lb_embed(15,1,0)
     page_button=PageButtons()
     page_button.page_index = 1
     page_button.previous_button.disabled = True
-    await interaction.response.send_message(rankings, view=page_button)
-
-@tree.command(
-        name="embed",
-        description="test command for embeds"
-        )
-async def embed_command(interaction: discord.Interaction):
-    embed = discord.Embed(
-            title="test",
-            description="this is a description"
-            )
-    await interaction.response.send_message(embed=embed)
+    page_button.max_pages = int((homs["body"][0]["totalScores"])/50+1)*2 
+    page_button.pages_button.label = "1" + "/" + str(int((homs["body"][0]["totalScores"])/50+1)*2)
+    await interaction.response.send_message(embed=rankings, view=page_button)
 
 @client.event
 async def on_ready():
