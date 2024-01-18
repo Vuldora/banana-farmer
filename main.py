@@ -1,4 +1,4 @@
-import discord, random, requests, json, os
+import discord, random, requests, json, os, math
 from discord import app_commands, ui
 from typing import Literal
 from dotenv import load_dotenv
@@ -76,6 +76,8 @@ class PageButtons(discord.ui.View):
             page_button.subpage_index = 0
             page_button.page_index += 1
         page_button.pages_button.label = str((page_button.page_index-1)*2+page_button.subpage_index+1) + "/" + str(page_button.max_pages)
+        if (page_button.page_index-1)*2+page_button.subpage_index+1 == page_button.max_pages:
+            page_button.next_button.disabled = True
         embed=lb_embed(15,page_button.page_index,page_button.subpage_index)
         await interaction.response.defer()
         msg = await interaction.original_response()
@@ -115,8 +117,8 @@ async def leaderboard_command(interaction: discord.Interaction):
     page_button=PageButtons()
     page_button.page_index = 1
     page_button.previous_button.disabled = True
-    page_button.max_pages = int((homs["body"][0]["totalScores"])/50+1)*2 
-    page_button.pages_button.label = "1" + "/" + str(int((homs["body"][0]["totalScores"])/50+1)*2)
+    page_button.max_pages = int(math.ceil((homs["body"][0]["totalScores"])/25)) 
+    page_button.pages_button.label = "1" + "/" + str(page_button.max_pages)
     await interaction.response.send_message(embed=rankings, view=page_button)
 
 @client.event
