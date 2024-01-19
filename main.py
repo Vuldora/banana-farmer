@@ -13,6 +13,7 @@ tree = app_commands.CommandTree(client)
 api_url = "https://data.ninjakiwi.com/battles2/homs"
 page_index = 1
 
+cute_people = ['Emilplane','Ryan Mehalic','Cologne']
 towers = ['Dart','Tack','Boomerang','Bomb','Ice','Glue','Sniper','Sub','Boat','Ace','Heli','Mortar','Dartling','Wizard','Super','Ninja','Alchemist','Druid','Village','Farm','Spike Factory','Engineer']
 maps = ['Bloontonium Mines','Docks','In the Wall','Mayan','Thin Ice','Banana Depot','Basalt Columns','Bloon Bot Factory','Building Site','Castle Ruins','Cobra Command','Dino Graveyard','Garden','Glade','Inflection','Koru','Oasis','Off-tide','Pirate Cove','Ports','Precious Space','Sands of Time','Star','Sun Palace']
 heroes = ['Quincy','Cyber Quincy','Gwen','Science Gwen','Obyn','Ocean Obyn','Striker Jones','Biker Bones','Churchill','Sentai','Benjamin','DJ Benjammin','Ezili','Smudge Catt Ezili','Pat Fusty','Snowpat','Jericho','Highwayman','Star Captain','Adora']
@@ -154,7 +155,7 @@ async def leaderboard_command(interaction: discord.Interaction):
 @client.event
 async def on_ready():
     await tree.sync()
-    await client.change_presence(activity=discord.Activity(type=discord.ActivityType.watching, name="Ryan Mehalic"))
+    await client.change_presence(activity=discord.Activity(type=discord.ActivityType.watching, name=cute_people[random.randint(0,len(cute_people)-1)]))
     print("Initilization Complete")
 
 client.run(DISCORD_TOKEN)
