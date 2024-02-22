@@ -24,7 +24,7 @@ async def ping_command(interaction: discord.Interaction):
 )
 @app_commands.describe(hom_only="Return only Hall of Masters maps")
 async def map_command(interaction: discord.Interaction, hom_only: Literal["Yes","No"]):
-    maps = ['Bloontonium Mines','Docks','In the Wall','Mayan','Thin Ice','Banana Depot','Basalt Columns','Bloon Bot Factory','Building Site','Castle Ruins','Cobra Command','Dino Graveyard','Garden','Glade','Inflection','Koru','Oasis','Off-tide','Pirate Cove','Ports','Precious Space','Sands of Time','Star','Sun Palace']
+    maps = ['Bloontonium Mines','Docks','In the Wall','Mayan','Thin Ice','Banana Depot','Basalt Columns','Bloon Bot Factory','Building Site','Castle Ruins','Cobra Command','Dino Graveyard','Garden','Glade','Inflection','Koru','Oasis','Off-tide','Pirate Cove','Ports','Precious Space','Sands of Time','Star','Sun Palace','Salmon Ladder']
     if interaction.data["options"][0]["value"] == "Yes":
         await interaction.response.send_message(maps[random.randint(4,(len(maps) - 1))])
     else:
