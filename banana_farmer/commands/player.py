@@ -2,6 +2,14 @@ import discord, requests, json, math
 from discord import app_commands, ui
 
 async def player_command(interaction, player: str):
+    """Shows a player's stats
+
+    Parameters
+    -----------
+    player: str
+        Enter player name, must be in Hall of Masters
+    """
+    await interaction.response.defer()
     player = interaction.data["options"][0]["value"]
     homs = requests.get("https://data.ninjakiwi.com/battles2/homs").json()
     last_page = int(math.ceil((homs["body"][0]["totalScores"])/50))
@@ -18,29 +26,30 @@ async def player_command(interaction, player: str):
                 found += 1
         page += 1
     if found == 0:
-        await interaction.response.send_message("I couldn't find this player")
+        await interaction.followup.send("I couldn't find this player")
     elif found == 1:
         player_stats = player_embed(matches[0]["profile"])
-        await interaction.response.send_message(embed=player_stats)
+        await interaction.followup.send(embed=player_stats)
     else:
         embed = discord.Embed(
         title="Found multiple results",
         description="please select which player's stats you want to view"
         )
-        select = discord.ui.Select()
-        for match in matches:
-            select.add_option(label=match["displayName"],value=match["profile"])
         async def selection_callback(interaction):
             player_stats = player_embed(select.values[0])
-            await interaction.response.send_message(embed=player_stats)
-        select.callback = selection_callback
+            await msg.edit(embed=player_stats,view=None)
+        select = discord.ui.Select()
+        select.callback =  selection_callback
+        for match in matches:
+            select.add_option(label=match["displayName"] + " at " + str(match["score"]) + " score",value=match["profile"])
         view = discord.ui.View()
         view.add_item(select)
-        await interaction.response.send_message(embed=embed,view=view)
+        msg = await interaction.followup.send(embed=embed,view=view)
+        
 
 player_command = discord.app_commands.Command(
     name="player",
-    description="Shows a player's stats - must be in hall of masters",
+    description="Shows a player's stats",
     callback=player_command,
 )
 

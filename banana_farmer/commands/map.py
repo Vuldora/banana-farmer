@@ -22,5 +22,3 @@ map_command = discord.app_commands.Command(
     description="Randomly select a map",
     callback=map_callback,
 )
-#@app_commands.describe(hom_only="Return only Hall of Masters maps")
-#idk if I can just uncomment that or...
