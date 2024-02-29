@@ -10,7 +10,6 @@ async def player_command(interaction, player: str):
         Enter player name, must be in Hall of Masters
     """
     await interaction.response.defer()
-    player = interaction.data["options"][0]["value"]
     homs = requests.get("https://data.ninjakiwi.com/battles2/homs").json()
     last_page = int(math.ceil((homs["body"][0]["totalScores"])/50))
     found = 0
